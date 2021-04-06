@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 // import { Client } from "@hashgraph/sdk";
 
 import Button from "../components/Base/Button";
@@ -6,42 +6,47 @@ import Button from "../components/Base/Button";
 
 import { UserContext } from "../App";
 
-let ivWallet: unknown;
-let ivAccount: unknown;
-
-async function handleConnect(networkName: string | undefined): Promise<void> {
-  // @ts-ignore
-  if (window.wallet != null && networkName != null) {
-    // @ts-ignore
-    ivWallet = window.wallet;
-
-    // @ts-ignore
-    ivAccount = await ivWallet.login(networkName);
-  }
-}
-
 function handleVerifyKeys(): void {
-  console.log(ivWallet);
-  console.log(ivAccount);
+  console.log("Verify");
 }
 
-function Exchange() {
+const Exchange: React.FC = () => {
   // Get App User Information (defined in App)
   const user = useContext(UserContext);
-  console.log(user);
-  
+
+  // Reactive container for iv wallet information
+  const [externalWallet, setExternalWallet] = useState({} as unknown);
+
+  async function handleConnect(): Promise<void> {
+    // @ts-ignore
+    if (window.wallet != null && user.networkName != null) {
+      // @ts-ignore
+      setExternalWallet(window.wallet);
+    }
+  }
+
+  const externalWalletDisplay = () => {
+    // @ts-ignore
+    if (externalWallet.account != null) { 
+      return (<div>{JSON.stringify(externalWallet)}</div>);
+    }
+
+    return null;
+  }
+
   return (
-    <div className="w-screen h-screen p-20">
-      <div className="flex items-center justify-center">
-        <Button onClick={() => handleConnect(user.networkName)} width="200" height="50">
-          Connect to IV Wallet
-        </Button>
-        <Button onClick={handleVerifyKeys} width="200" height="50">
-          Is Internal Key Associated With Both Accounts?
-        </Button>
-      </div>
+    <div className="flex flex-col">
+      <Button onClick={handleConnect}>
+        Connect to IV Wallet
+      </Button>
+
+      { externalWalletDisplay() }
+  
+      <Button onClick={handleVerifyKeys}>
+        Is Internal Key Associated With Both Accounts?
+      </Button>
     </div>
-  )
+  );
 }
 
 export default Exchange;
