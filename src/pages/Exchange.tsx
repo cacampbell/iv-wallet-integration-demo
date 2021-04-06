@@ -12,24 +12,19 @@ function handleVerifyKeys(): void {
 }
 
 const Exchange: React.FC = () => {
-  // Context Provider for User Information
+  // Context
   const userWallet = useContext(UserWalletContext);
 
   // State
   const [externalWallet, setExternalWallet] = useState({} as Wallet);
-  const [busy, setBusy] = useState(false);
 
   // Handlers
   function handleConnect(): void {
-    setBusy(true);
-    
     // @ts-ignore
     if (window.wallet != null && userWallet.networkName != null) {
       // @ts-ignore
       setExternalWallet(window.wallet);
     }
-
-    setBusy(false);
   }
 
   // Elements
@@ -63,13 +58,13 @@ const Exchange: React.FC = () => {
     }
     
     return (
-      <>
+      <div className="flex flex-col items-center w-96">
         <div className="p-2 text-xl font-semibold">
           Internal Wallet Information
         </div>
       
         {wallet()}
-      </>
+      </div>
     );
   }
 
@@ -83,7 +78,7 @@ const Exchange: React.FC = () => {
     }
     
     return (
-      <>
+      <div className="flex flex-col items-center w-96">
         <div className="p-2 text-xl font-semibold">
           External Wallet Information
         </div>
@@ -91,17 +86,19 @@ const Exchange: React.FC = () => {
         {wallet()}
       
         <Button onClick={handleConnect}>
-          Connect to IV Wallet
+          Connect IV Wallet
         </Button>
-      </>
+      </div>
     );
   }
 
+  // View
   return (
-    <div className="flex flex-col items-center p-10 justify-items-center w-96">
-      {internalWalletDisplay()}
-      
-      {externalWalletDisplay()}
+    <div className="flex flex-col items-center w-full p-10 justify-items-center">
+      <div className="flex items-start justify-items-center">
+        {internalWalletDisplay()}
+        {externalWalletDisplay()}
+      </div>
       
       <Button onClick={handleVerifyKeys}>
         Is Internal Key Associated With Both Accounts?
