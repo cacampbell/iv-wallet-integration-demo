@@ -20,7 +20,7 @@ devDependencies:
   eslint-plugin-react: 7.23.1_eslint@7.23.0
   postcss: 8.2.9
   prettier: 2.2.1
-  tailwindcss: 2.1.0_0bca15301caac8bc71ea0ad94045571f
+  tailwindcss: 2.1.1_0bca15301caac8bc71ea0ad94045571f
   typescript: 4.2.3
   vite: 2.1.5
 lockfileVersion: 5.2
@@ -606,10 +606,10 @@ packages:
       postcss: ^8.1.0
     resolution:
       integrity: sha512-7H4AJZXvSsn62SqZyJCP+1AWwOuoYpUfK6ot9vm0e87XD6mT8lDywc9D9OTJPMULyGcvmIxzTAMeG2Cc+YX+fA==
-  /balanced-match/1.0.0:
+  /balanced-match/1.0.2:
     dev: true
     resolution:
-      integrity: sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
+      integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
   /binary-extensions/2.2.0:
     dev: true
     engines:
@@ -618,7 +618,7 @@ packages:
       integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
   /brace-expansion/1.1.11:
     dependencies:
-      balanced-match: 1.0.0
+      balanced-match: 1.0.2
       concat-map: 0.0.1
     dev: true
     resolution:
@@ -635,7 +635,7 @@ packages:
     dependencies:
       caniuse-lite: 1.0.30001207
       colorette: 1.2.2
-      electron-to-chromium: 1.3.707
+      electron-to-chromium: 1.3.708
       escalade: 3.1.1
       node-releases: 1.1.71
     dev: true
@@ -882,10 +882,10 @@ packages:
       node: '>=6.0.0'
     resolution:
       integrity: sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==
-  /electron-to-chromium/1.3.707:
+  /electron-to-chromium/1.3.708:
     dev: true
     resolution:
-      integrity: sha512-BqddgxNPrcWnbDdJw7SzXVzPmp+oiyjVrc7tkQVaznPGSS9SKZatw6qxoP857M+HbOyyqJQwYQtsuFIMSTNSZA==
+      integrity: sha512-+A8ggYZ5riOLMcVAuzHx6bforaPzaiLnW1QOMD2SlMYQVi7QQTyQ/WrlZoebIH9ikmgr+tLJGpNITFFCUiQcPw==
   /emoji-regex/8.0.0:
     dev: true
     resolution:
@@ -2563,7 +2563,7 @@ packages:
       node: '>=10.0.0'
     resolution:
       integrity: sha512-F3cLs9a3hL1Z7N4+EkSscsel3z55XT950AvB05bwayrNg5T1/gykXtigioTAjbltvbMSJvvhFCbnf6mX+ntnJQ==
-  /tailwindcss/2.1.0_0bca15301caac8bc71ea0ad94045571f:
+  /tailwindcss/2.1.1_0bca15301caac8bc71ea0ad94045571f:
     dependencies:
       '@fullhuman/postcss-purgecss': 3.1.3
       autoprefixer: 10.2.5_postcss@8.2.9
@@ -2602,7 +2602,7 @@ packages:
       autoprefixer: ^10.0.2
       postcss: ^8.0.9
     resolution:
-      integrity: sha512-3tsoLMOrFvwrm0VRx2Hr3cRJ158Sd/KH9BwKg5xyS96yiR/0frQBCfUbXvNsa2hxzViGN4nSWJqzBWDQb4jOSA==
+      integrity: sha512-zZ6axGqpSZOCBS7wITm/WNHkBzDt5CIZlDlx0eCVldwTxFPELCVGbgh7Xpb3/kZp3cUxOmK7bZUjqhuMrbN6xQ==
   /text-table/0.2.0:
     dev: true
     resolution:
@@ -2778,26 +2778,26 @@ packages:
     resolution:
       integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
 specifiers:
-  '@types/react': ^17.0.0
-  '@types/react-dom': ^17.0.0
+  '@types/react': ^17.0.3
+  '@types/react-dom': ^17.0.3
   '@types/react-router-dom': ^5.1.7
-  '@typescript-eslint/eslint-plugin': ^4.18.0
-  '@typescript-eslint/parser': ^4.18.0
-  '@vitejs/plugin-react-refresh': ^1.3.1
+  '@typescript-eslint/eslint-plugin': ^4.21.0
+  '@typescript-eslint/parser': ^4.21.0
+  '@vitejs/plugin-react-refresh': ^1.3.2
   autoprefixer: ^10.2.5
-  eslint: ^7.22.0
+  eslint: ^7.23.0
   eslint-config-prettier: ^8.1.0
   eslint-config-standard: ^16.0.2
   eslint-plugin-import: ^2.22.1
   eslint-plugin-node: ^11.1.0
   eslint-plugin-promise: ^4.3.1
-  eslint-plugin-react: ^7.22.0
-  postcss: ^8.2.8
+  eslint-plugin-react: ^7.23.1
+  postcss: ^8.2.9
   prettier: ^2.2.1
-  react: ^17.0.0
-  react-cool-dimensions: ^1.3.2
-  react-dom: ^17.0.0
+  react: ^17.0.2
+  react-cool-dimensions: ^1.3.4
+  react-dom: ^17.0.2
   react-router-dom: ^5.2.0
-  tailwindcss: ^2.0.4
-  typescript: ^4.1.2
-  vite: ^2.1.0
+  tailwindcss: ^2.1.1
+  typescript: ^4.2.3
+  vite: ^2.1.5

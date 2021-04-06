@@ -1,5 +1,5 @@
 import React from 'react'
-import Diagram from "./pages/Diagram";
+import Exchange from "./pages/Exchange";
 import {BrowserRouter, Switch, Route} from "react-router-dom";
 
 const App = () => {
@@ -7,7 +7,7 @@ const App = () => {
     <BrowserRouter>
       <Switch>
         <Route exact path='/'>
-          <Diagram/>
+          <Exchange />
         </Route>
       </Switch>
     </BrowserRouter>

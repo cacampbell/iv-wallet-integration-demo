@@ -1,4 +1,4 @@
-# app
+# App
 
 Starter using Vite + React + TypeScript + Tailwind.
 
@@ -16,7 +16,7 @@ Starter using Vite + React + TypeScript + Tailwind.
 
 [TypeScript](https://github.com/microsoft/TypeScript) is a superset of JavaScript.
 
-When you use TypeScript with React, you can write JSX with TypeScript, called TSX. Then you can develop views written by  **Type-Safe** template.
+When you use TypeScript with React, you can write JSX with TypeScript, called TSX. Then you can develop views written by **Type-Safe** template.
 
 ## Tailwind CSS
 
