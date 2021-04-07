@@ -3,16 +3,39 @@ import React from "react";
 interface Props {
   children?: React.ReactNode;
   onClick: () => void;
+  disabled: boolean;
 }
 
 const Button: React.FC<Props> = ({
   children,
   onClick,
+  disabled
 }: Props) => {
+  const classes = [
+      "inline-flex",
+      "items-center",
+      "bg-transparent",
+      "px-4", 
+      "py-2",
+      "font-semibold",
+      "rounded-full",
+      "border",
+      "border-black"
+  ];
+
+  const appliedClasses = () => {
+    if (disabled) {
+      classes.push("text-gray-200 border-gray-200");
+    }
+
+    return classes;
+  }
+
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center justify-center bg-transparent border border-black px-4 py-2 font-semibold rounded-full hover:bg-opacity-90`}
+      className={appliedClasses().join(" ")}
+      disabled={disabled}
     >
       {children}
     </button>
