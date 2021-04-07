@@ -7,8 +7,8 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
 
 const Input: React.FC<Props> = ({ name, label, ...rest }: Props) => {
   return (
-    <div>
-      <label htmlFor={name}>{label}</label>
+    <div className="flex flex-col items-center justify-start">
+      <label className="text-sm" htmlFor={name}>{label}</label>
       <input id={name} {...rest}></input>
     </div>
   );

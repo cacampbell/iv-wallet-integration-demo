@@ -1,73 +1,9 @@
 import React, { useContext, useState } from "react";
-import type { Client } from "@hashgraph/sdk";
-
+import { Wallet } from "../domain/wallet";
+import { testWallet } from "../service/hedera";
+import Balances from "../components/Base/Balances";
 import Button from "../components/Base/Button";
-// import Input from "../components/Base/Input";
-
-import { UserWalletContext, Wallet } from "../App";
-
-// Hedera Services
-async function constructClient(wallet: Wallet): Promise<Client | null> {
-  const { Client } = await import("@hashgraph/sdk");
-  let client: Client | null = null;
-  
-  switch (wallet.networkName) {
-    case "Testnet":
-      client = Client.forTestnet();
-      break;
-    case "Mainnet":
-      client = Client.forMainnet();
-      break;
-    case "Previewnet":
-      client = Client.forPreviewnet();
-      break;
-  }
-
-  if (client != null) {
-    if (wallet.privateKey != null) {
-      client.setOperator(wallet.accountId, wallet.privateKey);
-    } else if (wallet.signer != null && wallet.publicKey != null) {
-      client.setOperatorWith(wallet.accountId, wallet.publicKey, wallet.signer);
-    } else {
-      return null;
-    }
-  }
-
-  return client;
-}
-
-async function testWallet(wallet: Wallet): Promise<boolean | undefined> {
-  const client = await constructClient(wallet);
-  
-  if (client != null) {
-    const { TransferTransaction, Hbar, Status } = await import("@hashgraph/sdk");
-
-    try {
-      const loginTx = new TransferTransaction()
-        .setMaxTransactionFee(Hbar.fromTinybars(1))
-        .addHbarTransfer(wallet.accountId, 0);
-      await (await (loginTx.execute(client))).getReceipt(client);
-    } catch (error) {
-      if (error.name === "StatusError") {
-        if (error.message != null) {
-          if (
-            error.message.includes(Status.InsufficientTxFee.toString()) ||
-            error.message.includes(Status.InsufficientPayerBalance.toString())
-          ) {
-            // If the transaction fails with Insufficient Tx Fee, this means
-            // that the account ID verification succeeded before this point
-            // Same for Insufficient Payer Balance
-            return true;
-          }
-        }
-      }
-
-      throw error;
-    }
-  } else {
-    throw new Error("Could not construct Hedera Client");
-  }
-}
+import { UserWalletContext } from "../App";
 
 // Component Definition
 const Exchange: React.FC = () => {
@@ -200,7 +136,7 @@ const Exchange: React.FC = () => {
       
         {wallet()}
       
-        <Button onClick={handleConnect}>
+        <Button onClick={handleConnect} disabled={false}>
           Connect IV Wallet
         </Button>
       </div>
@@ -224,11 +160,22 @@ const Exchange: React.FC = () => {
     return null;
   }
 
-  const transferForm = () => {
+  const balances = () => {
     if (keysAssociated) {
       return (
-        "Yolo" // TODO: AssetInput, fetch Asset balances, AssetSelect
+        <>
+        <Balances wallet={userWallet} />
+        <Balances wallet={externalWallet} />
+        </>
       );
+    }
+
+    return null;
+  }
+
+  const transferForm = () => {
+    if (keysAssociated) {
+      return (<span />);
     }
 
     return null;
@@ -241,7 +188,9 @@ const Exchange: React.FC = () => {
       
       <div className="flex items-start justify-center w-full">
         {internalWalletDisplay()}
-
+        
+        <div className="px-10" />
+        
         {externalWalletDisplay()}
       </div>
       
@@ -255,7 +204,11 @@ const Exchange: React.FC = () => {
         { keysAssociatedDisplay() }
       </div>
 
-      <div className="flex items-center justify-items-center">
+      <div className="flex items-start justify-center w-full">
+        { balances() }
+      </div>
+
+      <div className="flex items-start justify-center w-full">
         { transferForm() }
       </div>
     </div>

@@ -2,14 +2,6 @@ import React from 'react'
 import Exchange from "./pages/Exchange";
 import {BrowserRouter, Switch, Route} from "react-router-dom";
 
-export interface Wallet {
-  networkName: string;
-  accountId: string;
-  privateKey?: string;
-  publicKey?: string;
-  signer?: (message: Uint8Array) => Promise<Uint8Array>;
-}
-
 export const UserWalletContext = React.createContext({} as Wallet)
 
 const App = () => {
