@@ -1,11 +1,12 @@
 import React, { useContext, useState } from "react";
 import { Wallet } from "../domain/wallet";
 import { Asset } from "../domain/asset";
-import { getBalances, testWallet } from "../service/hedera";
+import { constructClient, getBalances, testWallet } from "../service/hedera";
 import AssetInput from "../components/Base/AssetInput";
 import Balances from "../components/Base/Balances";
 import Button from "../components/Base/Button";
 import { UserWalletContext } from "../App";
+import { Hbar } from "@hashgraph/sdk";
 
 // Context: Store Balance Info as Map<id, Asset[]>
 // Populate as Accounts are loaded
@@ -111,7 +112,60 @@ const Exchange: React.FC = () => {
   }
 
   async function handleExport(): Promise<void> {
-    console.log(`Export`);
+    setExportError("");
+    
+    if (internalAsset === "" || internalRawAmount === "") {
+      setExportError("Please select an asset and enter an amount.");
+      return;
+    }
+
+    try {
+      setExportBusy(true);
+      const { TokenId, Hbar, TransferTransaction, TokenAssociateTransaction } = await import("@hashgraph/sdk");
+      const client = await constructClient(userWallet);
+      if (client == null) {
+        throw new Error("Could not construct client for user wallet");
+      }
+      
+      if (internalAsset === "Hbar") {
+        // transfer hbar
+        const hbar = new Hbar(parseInt(internalRawAmount));
+        const transfer = new TransferTransaction()
+          .setMaxTransactionFee(new Hbar(1))
+          .setTransactionMemo("Export Asset")
+          .addHbarTransfer(userWallet.accountId, hbar.negated())
+          .addHbarTransfer(externalWallet.accountId, hbar);
+        await (await transfer.execute(client)).getReceipt(client);
+      } else {
+        const token = TokenId.fromString(internalAsset);
+        const amount = parseInt(internalRawAmount);
+
+        // Associate Token
+        try {        
+          const associate = new TokenAssociateTransaction()
+            .setAccountId(externalWallet.accountId)
+            .setTokenIds([token])
+            .setMaxTransactionFee(new Hbar(1));
+          await (await associate.execute(client)).getReceipt(client);
+        } catch (error) {
+          if (!error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
+            throw error;
+          }
+        }
+        
+        const transfer = new TransferTransaction()
+          .setMaxTransactionFee(new Hbar(1))
+          .setTransactionMemo("Export Asset")
+          .addTokenTransfer(token, userWallet.accountId, -amount)
+          .addTokenTransfer(token, externalWallet.accountId, amount);
+        await (await transfer.execute(client)).getReceipt(client);
+      }
+    } catch (error) {
+      setExportError(error.message);
+    } finally {
+      await handleFetchBalances();
+      setExportBusy(false);
+    }
   }
 
   function handleExternalAssetChange(value: string): void {
@@ -123,7 +177,60 @@ const Exchange: React.FC = () => {
   }
 
   async function handleImport(): Promise<void> {
-    console.log(`Import`);
+    setImportError("");
+    
+    if (externalAsset === "" || externalRawAmount === "") {
+      setImportError("Please select an asset and enter an amount.");
+      return;
+    }
+
+    try {
+      setImportBusy(true);
+      const { TokenId, Hbar, TransferTransaction, TokenAssociateTransaction } = await import("@hashgraph/sdk");
+      const client = await constructClient(externalWallet);
+      if (client == null) {
+        throw new Error("Could not construct client for external wallet");
+      }
+      
+      if (externalAsset === "Hbar") {
+        // transfer hbar
+        const hbar = new Hbar(parseInt(externalRawAmount));
+        const transfer = new TransferTransaction()
+          .setMaxTransactionFee(new Hbar(1))
+          .setTransactionMemo("Import Asset")
+          .addHbarTransfer(userWallet.accountId, hbar.negated())
+          .addHbarTransfer(externalWallet.accountId, hbar);
+        await (await transfer.execute(client)).getReceipt(client);
+      } else {
+        const token = TokenId.fromString(externalAsset);
+        const amount = parseInt(externalRawAmount);
+
+        // Associate Token
+        try {        
+          const associate = new TokenAssociateTransaction()
+            .setAccountId(userWallet.accountId)
+            .setTokenIds([token])
+            .setMaxTransactionFee(new Hbar(1));
+          await (await associate.execute(client)).getReceipt(client);
+        } catch (error) {
+          if (!error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
+            throw error;
+          }
+        }
+        
+        const transfer = new TransferTransaction()
+          .setMaxTransactionFee(new Hbar(1))
+          .setTransactionMemo("Import Asset")
+          .addTokenTransfer(token, userWallet.accountId, -amount)
+          .addTokenTransfer(token, externalWallet.accountId, amount);
+        await (await transfer.execute(client)).getReceipt(client);
+      }
+    } catch (error) {
+      setImportError(error.message);
+    } finally {
+      await handleFetchBalances();
+      setImportBusy(false);
+    }
   }
 
   // Elements
@@ -131,7 +238,9 @@ const Exchange: React.FC = () => {
     const privateKey = () => {
       if (wallet.privateKey != null) {
         return (<div className="flex flex-col w-full">
-          <span className="font-semibold w-52">Private Key</span>{wallet.privateKey}
+          <span className="w-full font-semibold">Private Key</span>
+          
+          {wallet.privateKey}
         </div>);
       }
 
@@ -141,7 +250,9 @@ const Exchange: React.FC = () => {
     const publicKey = () => {
       if (wallet.publicKey != null) {
         return (<div className="flex flex-col w-full">
-          <span className="font-semibold w-52">Public Key</span>{wallet.publicKey}
+          <span className="w-full font-semibold">Public Key</span>
+          
+          {wallet.publicKey}
         </div>);
       }
 
@@ -156,8 +267,8 @@ const Exchange: React.FC = () => {
     
     return (
       <div className="flex flex-col items-start w-full h-full p-4 m-4 break-all bg-gray-200 justify-items-center">
-        <div className="flex w-full border border-t-0 border-l-0 border-r-0 border-black"><span className="font-semibold w-52">Network</span>{wallet.networkName}</div>
-        <div className="flex w-full border border-t-0 border-l-0 border-r-0 border-black"><span className="font-semibold w-52">Account</span>{wallet.accountId}</div>
+        <div className="flex w-full break-normal border border-t-0 border-l-0 border-r-0 border-black"><span className="w-full font-semibold">Network</span>{wallet.networkName}</div>
+        <div className="flex w-full break-normal border border-t-0 border-l-0 border-r-0 border-black"><span className="w-full font-semibold">Account</span>{wallet.accountId}</div>
         { privateKey() }
         { signer() }
         { publicKey() }
@@ -211,7 +322,7 @@ const Exchange: React.FC = () => {
 
   const errorDisplay = () => {
     if (error != null) {
-      return (<div className="p-4 text-2xl font-bold text-red-200">{error}</div>);
+      return (<div className="p-4 text-2xl font-bold text-red-400">{error}</div>);
     }
 
     return null;
@@ -280,7 +391,7 @@ const Exchange: React.FC = () => {
   }
 
   const exportErrorDisplay = () => {
-    if (exportError != null) {
+    if (exportError.length > 0) {
       return exportError;
     }
 
@@ -288,7 +399,7 @@ const Exchange: React.FC = () => {
   }
 
   const importErrorDisplay = () => {
-    if (importError != null) {
+    if (importError.length > 0) {
       return importError;
     }
 
@@ -321,13 +432,13 @@ const Exchange: React.FC = () => {
           <div className="p-2" />
         
           <Button 
-            disabled={importBusy} 
+            disabled={exportBusy} 
             onClick={handleExport}
           >
             Export
           </Button>
 
-          <div className="text-sm font-semibold text-red-400">
+          <div className="flex items-center justify-center pt-4 text-sm italic font-semibold text-red-400 w-96">
             {exportErrorDisplay()}
           </div>
         </div>
@@ -348,13 +459,13 @@ const Exchange: React.FC = () => {
           <div className="p-2" />
 
           <Button 
-            disabled={exportBusy} 
+            disabled={importBusy} 
             onClick={handleImport}
           >
             Import
           </Button>
 
-          <div className="text-sm font-semibold text-red-400">
+          <div className="flex items-center justify-center pt-4 text-sm italic font-semibold text-red-400 w-96">
             {importErrorDisplay()}
           </div>
         </div>
