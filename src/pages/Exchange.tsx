@@ -193,14 +193,25 @@ const Exchange: React.FC = () => {
   }
 
   const balancesDisplay = () => {
+    function externalBalance() {
+      if (userWallet.accountId !== externalWallet.accountId) {
+        return (
+          <>
+          <div className="px-10" />
+          
+          <Balances id={externalWallet.accountId.toString()} />
+          </>
+        );
+      }
+
+      return null;
+    }
+    
     if (keysAssociated) {
       return (
         <>
         <Balances id={userWallet.accountId.toString()} />
-
-        <div className="px-10" />
-
-        <Balances id={externalWallet.accountId.toString()} />
+        { externalBalance() }
         </>
       );
     }
