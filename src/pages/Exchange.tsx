@@ -1,10 +1,11 @@
 import React, { useContext, useState } from "react";
 import { Wallet } from "../domain/wallet";
+import { Asset } from "../domain/asset";
 import { getBalances, testWallet } from "../service/hedera";
+import AssetInput from "../components/Base/AssetInput";
 import Balances from "../components/Base/Balances";
 import Button from "../components/Base/Button";
 import { UserWalletContext } from "../App";
-import { Asset } from "../domain/asset";
 
 // Context: Store Balance Info as Map<id, Asset[]>
 // Populate as Accounts are loaded
@@ -44,30 +45,7 @@ const Exchange: React.FC = () => {
     }
   }
 
-  async function handleVerifyKeys(): Promise<void> {
-    setError(null);
-    setKeysAssociated(null);
-
-    // Internal Key, External Account
-    const crossWallet = {
-      networkName: userWallet.networkName,
-      accountId: externalWallet.accountId,
-      privateKey: userWallet.privateKey
-    };
-    
-    if (userWallet.accountId != null && externalWallet.accountId != null) {
-      try {
-        await testWallet(userWallet);
-        await testWallet(crossWallet);
-        setKeysAssociated(true);
-      } catch (error) {
-        setError(error.message);
-        setKeysAssociated(false);
-      }
-    }
-  }
-
-  async function handleFetchBalances(): Promise<void> {
+    async function handleFetchBalances(): Promise<void> {
     // Don't want to request signature externally for balance queries
     const proxyExternalWallet = {
       accountId: externalWallet.accountId,
@@ -89,6 +67,29 @@ const Exchange: React.FC = () => {
     }
 
     setBalances(newBalances);
+  }
+
+  async function handleVerifyKeys(): Promise<void> {
+    setError(null);
+    setKeysAssociated(null);
+
+    // Internal Key, External Account
+    const crossWallet = {
+      networkName: userWallet.networkName,
+      accountId: externalWallet.accountId,
+      privateKey: userWallet.privateKey
+    };
+    
+    if (userWallet.accountId != null && externalWallet.accountId != null) {
+      try {
+        await testWallet(userWallet);
+        await testWallet(crossWallet);
+        setKeysAssociated(true);
+      } catch (error) {
+        setError(error.message);
+        setKeysAssociated(false);
+      }
+    }
   }
 
   // Elements
@@ -207,11 +208,73 @@ const Exchange: React.FC = () => {
     return null;
   }
 
+  function handleInternalAssetChange(value: string): void {
+    console.log(`InternalAsset: ${value}`)
+  }
+
+  function handleInternalAmountChange(value: string): void {
+    console.log(`InternalAmount: ${value}`)
+  }
+
+  async function handleExport(): Promise<void> {
+    console.log(`Export`);
+  }
+
+  function handleExternalAssetChange(value: string): void {
+    console.log(`ExternalAsset: ${value}`)
+  }
+
+  function handleExternalAmountChange(value: string): void {
+    console.log(`ExternalAmount: ${value}`)
+  }
+
+  async function handleImport(): Promise<void> {
+    console.log(`Import`);
+  }
+
   const transferForm = () => {
     if (keysAssociated) {
+      if (userWallet.accountId === externalWallet.accountId) {
+        return (
+          <div className="p-10 italic font-semibold text-red-400">
+            {`Same Account ID (${userWallet.accountId.toString()}) for Internal and External Account. Cannot Transfer Assets.`}
+          </div>
+        );
+      }
+
       return (
         <>
+        <div className="flex flex-col items-center justify-center">
+          <AssetInput
+            id={userWallet.accountId.toString()}
+            onChangeAsset={handleInternalAssetChange}
+            onChangeAmount={handleInternalAmountChange}
+          />
         
+          <Button 
+            disabled={false} 
+            onClick={handleExport}
+          >
+            Export
+          </Button>
+        </div>
+        
+        <div className="p-10" />
+
+        <div className="flex flex-col items-center justify-center">
+          <AssetInput
+            id={externalWallet.accountId.toString()}
+            onChangeAsset={handleExternalAssetChange}
+            onChangeAmount={handleExternalAmountChange}
+          />
+
+          <Button 
+            disabled={false} 
+            onClick={handleImport}
+          >
+            Import
+          </Button>
+        </div>
         </>
       );
     }
