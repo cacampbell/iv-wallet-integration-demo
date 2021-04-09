@@ -1,6 +1,7 @@
 import React from 'react'
 import Exchange from "./pages/Exchange";
 import {BrowserRouter, Switch, Route} from "react-router-dom";
+import { Wallet } from './domain/wallet';
 
 export const UserWalletContext = React.createContext({} as Wallet)
 

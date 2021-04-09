@@ -1,9 +1,15 @@
 import React, { useContext, useState } from "react";
 import { Wallet } from "../domain/wallet";
-import { testWallet } from "../service/hedera";
+import { getBalances, testWallet } from "../service/hedera";
 import Balances from "../components/Base/Balances";
 import Button from "../components/Base/Button";
 import { UserWalletContext } from "../App";
+import { Asset } from "../domain/asset";
+
+// Context: Store Balance Info as Map<id, Asset[]>
+// Populate as Accounts are loaded
+// Access in children via useContext
+export const BalancesContext = React.createContext({} as Map<string, Asset[]>);
 
 // Component Definition
 const Exchange: React.FC = () => {
@@ -14,6 +20,7 @@ const Exchange: React.FC = () => {
   const [externalWallet, setExternalWallet] = useState({} as Wallet);
   const [error, setError] = useState(null as string | null);
   const [keysAssociated, setKeysAssociated] = useState(null as boolean | null);
+  const [balances, setBalances] = useState(new Map() as Map<string, Asset[]>);
 
   // Handlers
   async function handleConnect(): Promise<void> {
@@ -58,6 +65,30 @@ const Exchange: React.FC = () => {
         setKeysAssociated(false);
       }
     }
+  }
+
+  async function handleFetchBalances(): Promise<void> {
+    // Don't want to request signature externally for balance queries
+    const proxyExternalWallet = {
+      accountId: externalWallet.accountId,
+      networkName: userWallet.networkName,
+      privateKey: userWallet.privateKey
+    }
+    
+    const newBalances = new Map() as Map<string, Asset[]>;
+    newBalances.set(
+      userWallet.accountId.toString(),
+      await getBalances(userWallet)
+    );
+    
+    if (userWallet.accountId !== proxyExternalWallet.accountId) {
+      newBalances.set(
+        proxyExternalWallet.accountId.toString(),
+        await getBalances(proxyExternalWallet)
+      );
+    }
+
+    setBalances(newBalances);
   }
 
   // Elements
@@ -153,32 +184,22 @@ const Exchange: React.FC = () => {
 
   const keysAssociatedDisplay = () => {
     if (keysAssociated != null) {
-      if (keysAssociated) return (<div className="font-semibold text-green-400">😃 Yup</div>);
-      return (<div className="font-semibold text-red-400">😅 Nope</div>)
+      if (keysAssociated) return (<div className="py-2 font-semibold text-green-400">😃 Yup</div>);
+      return (<div className="py-2 font-semibold text-red-400">😅 Nope</div>)
     }
 
     return null;
   }
 
-  const balances = () => {
+  const balancesDisplay = () => {
     if (keysAssociated) {
-      // We know the keys are associated, so
-      // use the internal key to get information about the
-      // external account to avoid repetitive signing prompts
-      // in the external wallet
-      const proxyWallet = {
-        networkName: userWallet.networkName,
-        accountId: externalWallet.accountId,
-        privateKey: userWallet.privateKey
-      }
-      
       return (
         <>
-        <Balances wallet={userWallet} />
+        <Balances id={userWallet.accountId.toString()} />
 
         <div className="px-10" />
 
-        <Balances wallet={proxyWallet} />
+        <Balances id={externalWallet.accountId.toString()} />
         </>
       );
     }
@@ -218,16 +239,26 @@ const Exchange: React.FC = () => {
         >
           Is Internal Key Associated With Both Accounts?
         </Button>
-        { keysAssociatedDisplay() }
+        
+        { keysAssociatedDisplay() ?? <div className="py-2" /> }
+        
+        <Button
+          onClick={handleFetchBalances}
+          disabled={userWallet.accountId == null || externalWallet.accountId == null}
+        >
+          Refresh Balances
+        </Button>
       </div>
 
-      <div className="flex items-start justify-center w-full">
-        { balances() }
-      </div>
+      <BalancesContext.Provider value={balances}>
+        <div className="flex items-start justify-center w-full">
+          { balancesDisplay() }
+        </div>
 
-      <div className="flex items-start justify-center w-full">
-        { transferForm() }
-      </div>
+        <div className="flex items-start justify-center w-full">
+          { transferForm() }
+        </div>
+      </BalancesContext.Provider>
     </div>
   );
 }

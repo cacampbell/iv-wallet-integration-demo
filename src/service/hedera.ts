@@ -108,3 +108,25 @@ export async function getTokenBalances(
 
   return null;
 }
+
+export async function getBalances(wallet: Wallet) {
+  const newAssets = []
+  const balance = await getHbarBalance(wallet);
+  const tokens = await getTokenBalances(wallet);
+    
+  // Hbar balance
+  newAssets.push({
+    asset: "Hbar",
+    balance: balance?.toString() ?? ""
+  });
+    
+  // Token Balances
+  for (const token of tokens!) {
+    newAssets.push({
+      asset: token.id.toString(),
+      balance: token.balance
+    });
+  }
+    
+  return [...new Set(newAssets)];
+}
