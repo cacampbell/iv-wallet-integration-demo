@@ -22,6 +22,16 @@ const Exchange: React.FC = () => {
   const [error, setError] = useState(null as string | null);
   const [keysAssociated, setKeysAssociated] = useState(null as boolean | null);
   const [balances, setBalances] = useState(new Map() as Map<string, Asset[]>);
+  
+  // State (Transfer Form)
+  const [internalAsset, setInternalAsset] = useState("Hbar");
+  const [externalAsset, setExternalAsset] = useState("Hbar");
+  const [internalRawAmount, setInternalRawAmount] = useState("");
+  const [externalRawAmount, setExternalRawAmount] = useState("");
+  const [importError, setImportError] = useState("");
+  const [exportError, setExportError] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
 
   // Handlers
   async function handleConnect(): Promise<void> {
@@ -45,7 +55,7 @@ const Exchange: React.FC = () => {
     }
   }
 
-    async function handleFetchBalances(): Promise<void> {
+  async function handleFetchBalances(): Promise<void> {
     // Don't want to request signature externally for balance queries
     const proxyExternalWallet = {
       accountId: externalWallet.accountId,
@@ -90,6 +100,30 @@ const Exchange: React.FC = () => {
         setKeysAssociated(false);
       }
     }
+  }
+
+  function handleInternalAssetChange(value: string): void {
+    setInternalAsset(value);
+  }
+
+  function handleInternalAmountChange(value: string): void {
+    setInternalRawAmount(value);
+  }
+
+  async function handleExport(): Promise<void> {
+    console.log(`Export`);
+  }
+
+  function handleExternalAssetChange(value: string): void {
+    setExternalAsset(value);
+  }
+
+  function handleExternalAmountChange(value: string): void {
+    setExternalRawAmount(value);
+  }
+
+  async function handleImport(): Promise<void> {
+    console.log(`Import`);
   }
 
   // Elements
@@ -168,7 +202,7 @@ const Exchange: React.FC = () => {
       
         {wallet()}
       
-        <Button onClick={handleConnect} disabled={false}>
+        <Button onClick={handleConnect} disabled={externalWallet.accountId != null}>
           Connect IV Wallet
         </Button>
       </div>
@@ -187,6 +221,32 @@ const Exchange: React.FC = () => {
     if (keysAssociated != null) {
       if (keysAssociated) return (<div className="py-2 font-semibold text-green-400">😃 Yup</div>);
       return (<div className="py-2 font-semibold text-red-400">😅 Nope</div>)
+    }
+
+    return null;
+  }
+
+  const controlsDisplay = () => {
+    if (userWallet.accountId != null && externalWallet.accountId != null) {
+      return (
+        <>
+        <Button
+          onClick={handleVerifyKeys}
+          disabled={userWallet.accountId == null || externalWallet.accountId == null}
+        >
+          Is Internal Key Associated With Both Accounts?
+        </Button>
+        
+        { keysAssociatedDisplay() ?? <div className="py-2" /> }
+        
+        <Button
+          onClick={handleFetchBalances}
+          disabled={userWallet.accountId == null || externalWallet.accountId == null}
+        >
+          Refresh Balances
+        </Button>
+        </>
+      );
     }
 
     return null;
@@ -219,28 +279,20 @@ const Exchange: React.FC = () => {
     return null;
   }
 
-  function handleInternalAssetChange(value: string): void {
-    console.log(`InternalAsset: ${value}`)
+  const exportErrorDisplay = () => {
+    if (exportError != null) {
+      return exportError;
+    }
+
+    return null;
   }
 
-  function handleInternalAmountChange(value: string): void {
-    console.log(`InternalAmount: ${value}`)
-  }
+  const importErrorDisplay = () => {
+    if (importError != null) {
+      return importError;
+    }
 
-  async function handleExport(): Promise<void> {
-    console.log(`Export`);
-  }
-
-  function handleExternalAssetChange(value: string): void {
-    console.log(`ExternalAsset: ${value}`)
-  }
-
-  function handleExternalAmountChange(value: string): void {
-    console.log(`ExternalAmount: ${value}`)
-  }
-
-  async function handleImport(): Promise<void> {
-    console.log(`Import`);
+    return null;
   }
 
   const transferForm = () => {
@@ -256,38 +308,77 @@ const Exchange: React.FC = () => {
       return (
         <>
         <div className="flex flex-col items-center justify-center">
+          <div className="p-2 text-xl font-semibold">
+            Export Assets
+          </div>
+        
           <AssetInput
             id={userWallet.accountId.toString()}
             onChangeAsset={handleInternalAssetChange}
             onChangeAmount={handleInternalAmountChange}
           />
+
+          <div className="p-2" />
         
           <Button 
-            disabled={false} 
+            disabled={importBusy} 
             onClick={handleExport}
           >
             Export
           </Button>
+
+          <div className="text-sm font-semibold text-red-400">
+            {exportErrorDisplay()}
+          </div>
         </div>
         
         <div className="p-10" />
 
         <div className="flex flex-col items-center justify-center">
+          <div className="p-2 text-xl font-semibold">
+            Import Assets
+          </div>
+          
           <AssetInput
             id={externalWallet.accountId.toString()}
             onChangeAsset={handleExternalAssetChange}
             onChangeAmount={handleExternalAmountChange}
           />
 
+          <div className="p-2" />
+
           <Button 
-            disabled={false} 
+            disabled={exportBusy} 
             onClick={handleImport}
           >
             Import
           </Button>
+
+          <div className="text-sm font-semibold text-red-400">
+            {importErrorDisplay()}
+          </div>
         </div>
         </>
       );
+    }
+
+    return null;
+  }
+
+  const balancesAndTransfersDisplay = () => {
+    if (balances.get(userWallet.accountId.toString()) != null &&
+      balances.get(externalWallet.accountId.toString()) != null) {
+        return (
+          <BalancesContext.Provider value={balances}>
+            <div className="flex items-start justify-center w-full">
+              { transferForm() }
+            </div>
+
+            <div className="flex items-start justify-center w-full pt-6">
+              { balancesDisplay() }
+            </div>
+          </BalancesContext.Provider>
+        );
     }
 
     return null;
@@ -307,32 +398,10 @@ const Exchange: React.FC = () => {
       </div>
       
       <div className="flex flex-col items-center justify-center w-full m-10">
-        <Button
-          onClick={handleVerifyKeys}
-          disabled={userWallet.accountId == null || externalWallet.accountId == null}
-        >
-          Is Internal Key Associated With Both Accounts?
-        </Button>
-        
-        { keysAssociatedDisplay() ?? <div className="py-2" /> }
-        
-        <Button
-          onClick={handleFetchBalances}
-          disabled={userWallet.accountId == null || externalWallet.accountId == null}
-        >
-          Refresh Balances
-        </Button>
+        { controlsDisplay() }
       </div>
 
-      <BalancesContext.Provider value={balances}>
-        <div className="flex items-start justify-center w-full">
-          { balancesDisplay() }
-        </div>
-
-        <div className="flex items-start justify-center w-full">
-          { transferForm() }
-        </div>
-      </BalancesContext.Provider>
+      { balancesAndTransfersDisplay() }
     </div>
   );
 }
