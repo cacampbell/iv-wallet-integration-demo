@@ -25,7 +25,7 @@ const Button: React.FC<Props> = ({
 
   const appliedClasses = () => {
     if (disabled) {
-      classes.push("text-gray-200 border-gray-200");
+      classes.push("text-gray-400 border-gray-400");
     }
 
     return classes;

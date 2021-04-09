@@ -99,7 +99,7 @@ export async function getTokenBalances(
       tokens.push({
         id: element,
         balance: balances[i],
-        decimals: 0 // Assume 0 for NFTs
+        decimals: 0 // Assume 0 for NFTs, don't care if other tokens are displayed wrong
       });
     }
 

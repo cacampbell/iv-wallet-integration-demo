@@ -162,10 +162,23 @@ const Exchange: React.FC = () => {
 
   const balances = () => {
     if (keysAssociated) {
+      // We know the keys are associated, so
+      // use the internal key to get information about the
+      // external account to avoid repetitive signing prompts
+      // in the external wallet
+      const proxyWallet = {
+        networkName: userWallet.networkName,
+        accountId: externalWallet.accountId,
+        privateKey: userWallet.privateKey
+      }
+      
       return (
         <>
         <Balances wallet={userWallet} />
-        <Balances wallet={externalWallet} />
+
+        <div className="px-10" />
+
+        <Balances wallet={proxyWallet} />
         </>
       );
     }
@@ -175,7 +188,11 @@ const Exchange: React.FC = () => {
 
   const transferForm = () => {
     if (keysAssociated) {
-      return (<span />);
+      return (
+        <>
+        
+        </>
+      );
     }
 
     return null;
