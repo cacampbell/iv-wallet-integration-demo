@@ -198,8 +198,8 @@ const Exchange: React.FC = () => {
         const transfer = new TransferTransaction()
           .setMaxTransactionFee(new Hbar(1))
           .setTransactionMemo("Import Asset")
-          .addHbarTransfer(userWallet.accountId, hbar.negated())
-          .addHbarTransfer(externalWallet.accountId, hbar);
+          .addHbarTransfer(userWallet.accountId, hbar)
+          .addHbarTransfer(externalWallet.accountId, hbar.negated());
         await (await transfer.execute(client)).getReceipt(client);
       } else {
         const token = TokenId.fromString(externalAsset);
@@ -221,8 +221,8 @@ const Exchange: React.FC = () => {
         const transfer = new TransferTransaction()
           .setMaxTransactionFee(new Hbar(1))
           .setTransactionMemo("Import Asset")
-          .addTokenTransfer(token, userWallet.accountId, -amount)
-          .addTokenTransfer(token, externalWallet.accountId, amount);
+          .addTokenTransfer(token, userWallet.accountId, amount)
+          .addTokenTransfer(token, externalWallet.accountId, -amount);
         await (await transfer.execute(client)).getReceipt(client);
       }
     } catch (error) {
