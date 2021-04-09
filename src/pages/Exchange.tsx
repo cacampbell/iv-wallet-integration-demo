@@ -1,12 +1,11 @@
 import React, { useContext, useState } from "react";
 import { Wallet } from "../domain/wallet";
 import { Asset } from "../domain/asset";
-import { constructClient, getBalances, testWallet } from "../service/hedera";
-import AssetInput from "../components/Base/AssetInput";
+import { getBalances, testWallet } from "../service/hedera";
 import Balances from "../components/Base/Balances";
 import Button from "../components/Base/Button";
+import TransferForm from "../components/Base/TransferForm";
 import { UserWalletContext } from "../App";
-import { Hbar } from "@hashgraph/sdk";
 
 // Context: Store Balance Info as Map<id, Asset[]>
 // Populate as Accounts are loaded
@@ -23,16 +22,6 @@ const Exchange: React.FC = () => {
   const [error, setError] = useState(null as string | null);
   const [keysAssociated, setKeysAssociated] = useState(null as boolean | null);
   const [balances, setBalances] = useState(new Map() as Map<string, Asset[]>);
-  
-  // State (Transfer Form)
-  const [internalAsset, setInternalAsset] = useState("Hbar");
-  const [externalAsset, setExternalAsset] = useState("Hbar");
-  const [internalRawAmount, setInternalRawAmount] = useState("");
-  const [externalRawAmount, setExternalRawAmount] = useState("");
-  const [importError, setImportError] = useState("");
-  const [exportError, setExportError] = useState("");
-  const [importBusy, setImportBusy] = useState(false);
-  const [exportBusy, setExportBusy] = useState(false);
 
   // Handlers
   async function handleConnect(): Promise<void> {
@@ -100,136 +89,6 @@ const Exchange: React.FC = () => {
         setError(error.message);
         setKeysAssociated(false);
       }
-    }
-  }
-
-  function handleInternalAssetChange(value: string): void {
-    setInternalAsset(value);
-  }
-
-  function handleInternalAmountChange(value: string): void {
-    setInternalRawAmount(value);
-  }
-
-  async function handleExport(): Promise<void> {
-    setExportError("");
-    
-    if (internalAsset === "" || internalRawAmount === "") {
-      setExportError("Please select an asset and enter an amount.");
-      return;
-    }
-
-    try {
-      setExportBusy(true);
-      const { TokenId, Hbar, TransferTransaction, TokenAssociateTransaction } = await import("@hashgraph/sdk");
-      const client = await constructClient(userWallet);
-      if (client == null) {
-        throw new Error("Could not construct client for user wallet");
-      }
-      
-      if (internalAsset === "Hbar") {
-        // transfer hbar
-        const hbar = new Hbar(parseInt(internalRawAmount));
-        const transfer = new TransferTransaction()
-          .setMaxTransactionFee(new Hbar(1))
-          .setTransactionMemo("Export Asset")
-          .addHbarTransfer(userWallet.accountId, hbar.negated())
-          .addHbarTransfer(externalWallet.accountId, hbar);
-        await (await transfer.execute(client)).getReceipt(client);
-      } else {
-        const token = TokenId.fromString(internalAsset);
-        const amount = parseInt(internalRawAmount);
-
-        // Associate Token
-        try {        
-          const associate = new TokenAssociateTransaction()
-            .setAccountId(externalWallet.accountId)
-            .setTokenIds([token])
-            .setMaxTransactionFee(new Hbar(1));
-          await (await associate.execute(client)).getReceipt(client);
-        } catch (error) {
-          if (!error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
-            throw error;
-          }
-        }
-        
-        const transfer = new TransferTransaction()
-          .setMaxTransactionFee(new Hbar(1))
-          .setTransactionMemo("Export Asset")
-          .addTokenTransfer(token, userWallet.accountId, -amount)
-          .addTokenTransfer(token, externalWallet.accountId, amount);
-        await (await transfer.execute(client)).getReceipt(client);
-      }
-    } catch (error) {
-      setExportError(error.message);
-    } finally {
-      await handleFetchBalances();
-      setExportBusy(false);
-    }
-  }
-
-  function handleExternalAssetChange(value: string): void {
-    setExternalAsset(value);
-  }
-
-  function handleExternalAmountChange(value: string): void {
-    setExternalRawAmount(value);
-  }
-
-  async function handleImport(): Promise<void> {
-    setImportError("");
-    
-    if (externalAsset === "" || externalRawAmount === "") {
-      setImportError("Please select an asset and enter an amount.");
-      return;
-    }
-
-    try {
-      setImportBusy(true);
-      const { TokenId, Hbar, TransferTransaction, TokenAssociateTransaction } = await import("@hashgraph/sdk");
-      const client = await constructClient(externalWallet);
-      if (client == null) {
-        throw new Error("Could not construct client for external wallet");
-      }
-      
-      if (externalAsset === "Hbar") {
-        // transfer hbar
-        const hbar = new Hbar(parseInt(externalRawAmount));
-        const transfer = new TransferTransaction()
-          .setMaxTransactionFee(new Hbar(1))
-          .setTransactionMemo("Import Asset")
-          .addHbarTransfer(userWallet.accountId, hbar)
-          .addHbarTransfer(externalWallet.accountId, hbar.negated());
-        await (await transfer.execute(client)).getReceipt(client);
-      } else {
-        const token = TokenId.fromString(externalAsset);
-        const amount = parseInt(externalRawAmount);
-
-        // Associate Token
-        try {        
-          const associate = new TokenAssociateTransaction()
-            .setAccountId(userWallet.accountId)
-            .setTokenIds([token])
-            .setMaxTransactionFee(new Hbar(1));
-          await (await associate.execute(client)).getReceipt(client);
-        } catch (error) {
-          if (!error.message.includes("TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT")) {
-            throw error;
-          }
-        }
-        
-        const transfer = new TransferTransaction()
-          .setMaxTransactionFee(new Hbar(1))
-          .setTransactionMemo("Import Asset")
-          .addTokenTransfer(token, userWallet.accountId, amount)
-          .addTokenTransfer(token, externalWallet.accountId, -amount);
-        await (await transfer.execute(client)).getReceipt(client);
-      }
-    } catch (error) {
-      setImportError(error.message);
-    } finally {
-      await handleFetchBalances();
-      setImportBusy(false);
     }
   }
 
@@ -390,23 +249,7 @@ const Exchange: React.FC = () => {
     return null;
   }
 
-  const exportErrorDisplay = () => {
-    if (exportError.length > 0) {
-      return exportError;
-    }
-
-    return null;
-  }
-
-  const importErrorDisplay = () => {
-    if (importError.length > 0) {
-      return importError;
-    }
-
-    return null;
-  }
-
-  const transferForm = () => {
+  const transferForms = () => {
     if (keysAssociated) {
       if (userWallet.accountId === externalWallet.accountId) {
         return (
@@ -418,57 +261,21 @@ const Exchange: React.FC = () => {
 
       return (
         <>
-        <div className="flex flex-col items-center justify-center">
-          <div className="p-2 text-xl font-semibold">
-            Export Assets
-          </div>
-        
-          <AssetInput
-            id={userWallet.accountId.toString()}
-            onChangeAsset={handleInternalAssetChange}
-            onChangeAmount={handleInternalAmountChange}
-          />
-
-          <div className="p-2" />
-        
-          <Button 
-            disabled={exportBusy} 
-            onClick={handleExport}
-          >
-            Export
-          </Button>
-
-          <div className="flex items-center justify-center pt-4 text-sm italic font-semibold text-red-400 w-96">
-            {exportErrorDisplay()}
-          </div>
-        </div>
+        <TransferForm
+          label="Export"
+          sender={userWallet}
+          recipient={externalWallet}
+          onTransfer={handleFetchBalances}
+        />
         
         <div className="p-10" />
 
-        <div className="flex flex-col items-center justify-center">
-          <div className="p-2 text-xl font-semibold">
-            Import Assets
-          </div>
-          
-          <AssetInput
-            id={externalWallet.accountId.toString()}
-            onChangeAsset={handleExternalAssetChange}
-            onChangeAmount={handleExternalAmountChange}
-          />
-
-          <div className="p-2" />
-
-          <Button 
-            disabled={importBusy} 
-            onClick={handleImport}
-          >
-            Import
-          </Button>
-
-          <div className="flex items-center justify-center pt-4 text-sm italic font-semibold text-red-400 w-96">
-            {importErrorDisplay()}
-          </div>
-        </div>
+        <TransferForm
+          label="Import"
+          sender={externalWallet}
+          recipient={userWallet}
+          onTransfer={handleFetchBalances}
+        />
         </>
       );
     }
@@ -482,7 +289,7 @@ const Exchange: React.FC = () => {
         return (
           <BalancesContext.Provider value={balances}>
             <div className="flex items-start justify-center w-full">
-              { transferForm() }
+              { transferForms() }
             </div>
 
             <div className="flex items-start justify-center w-full pt-6">
